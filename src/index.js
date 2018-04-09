@@ -1,3 +1,4 @@
+/*eslint-disable*/
 import createStore from './createStore'
 import combineReducers from './combineReducers'
 import bindActionCreators from './bindActionCreators'
@@ -6,10 +7,10 @@ import compose from './compose'
 import warning from './utils/warning'
 import __DO_NOT_USE__ActionTypes from './utils/actionTypes'
 
-/*
- * This is a dummy function to check if the function name has been altered by minification.
- * If the function has been minified and NODE_ENV !== 'production', warn the user.
- */
+/**
+ * 这个空函数作用只是为确定环境与版本是否匹配
+ * NODE_ENV !== 'production'，不为生产环境，函数名却被混淆时，抛出警告
+ * */
 function isCrushed() {}
 
 if (

@@ -1,3 +1,8 @@
+/**
+ * 通过将action绑定到dispatch上,方面多次调用（感觉没啥软用）
+ *
+ * @returns {Function} - 一个绑定了action的dispatch
+ * */
 function bindActionCreator(actionCreator, dispatch) {
   return function() {
     return dispatch(actionCreator.apply(this, arguments))

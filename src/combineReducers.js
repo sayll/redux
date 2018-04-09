@@ -2,6 +2,7 @@ import ActionTypes from './utils/actionTypes'
 import warning from './utils/warning'
 import isPlainObject from './utils/isPlainObject'
 
+// 如果`dispatch`，reducer返回无效的state则抛出异常
 function getUndefinedStateErrorMessage(key, action) {
   const actionType = action && action.type
   const actionDescription =
@@ -14,6 +15,7 @@ function getUndefinedStateErrorMessage(key, action) {
   )
 }
 
+// 检验各个参数的有效性 [state,finalReducers,action,unexpectedKeyCache]
 function getUnexpectedStateShapeWarningMessage(
   inputState,
   reducers,
@@ -25,7 +27,6 @@ function getUnexpectedStateShapeWarningMessage(
     action && action.type === ActionTypes.INIT
       ? 'preloadedState argument passed to createStore'
       : 'previous state received by the reducer'
-
   if (reducerKeys.length === 0) {
     return (
       'Store does not have a valid reducer. Make sure the argument passed ' +
@@ -62,6 +63,7 @@ function getUnexpectedStateShapeWarningMessage(
   }
 }
 
+// 检测reducers是否存在默认导出的state，不存在则抛出异常
 function assertReducerShape(reducers) {
   Object.keys(reducers).forEach(key => {
     const reducer = reducers[key]
@@ -100,39 +102,35 @@ function assertReducerShape(reducers) {
 }
 
 /**
- * Turns an object whose values are different reducer functions, into a single
- * reducer function. It will call every child reducer, and gather their results
- * into a single state object, whose keys correspond to the keys of the passed
- * reducer functions.
+ * 意将多个reducer合并为一个reducers，它们返回的state也将被合并为一个键(reducer的方法名)值(reducer返回的state)对应的对象
  *
- * @param {Object} reducers An object whose values correspond to different
- * reducer functions that need to be combined into one. One handy way to obtain
- * it is to use ES6 `import * as reducers` syntax. The reducers may never return
- * undefined for any action. Instead, they should return their initial state
- * if the state passed to them was undefined, and the current state for any
- * unrecognized action.
+ * @param {Object} reducers - 键值对形式的reducer
  *
- * @returns {Function} A reducer function that invokes every reducer inside the
- * passed object, and builds a state object with the same shape.
+ * @returns {Function} - 这个方法将调用所有的reducer，将其返回的state进行合并，返回最终的state。
  */
 export default function combineReducers(reducers) {
+  // 存放所有reduce的方法名（包括无效方法）
   const reducerKeys = Object.keys(reducers)
+  // 存放所有有效的reduce方法
   const finalReducers = {}
   for (let i = 0; i < reducerKeys.length; i++) {
     const key = reducerKeys[i]
 
+    // 无效方法，警告处理
     if (process.env.NODE_ENV !== 'production') {
       if (typeof reducers[key] === 'undefined') {
         warning(`No reducer provided for key "${key}"`)
       }
     }
-
+    // 有效方法将其存入`finalReducers`
     if (typeof reducers[key] === 'function') {
       finalReducers[key] = reducers[key]
     }
   }
+  // 保存最终有效的reducer的所有方法名
   const finalReducerKeys = Object.keys(finalReducers)
 
+  // 测试环境缓存state
   let unexpectedKeyCache
   if (process.env.NODE_ENV !== 'production') {
     unexpectedKeyCache = {}
@@ -140,16 +138,21 @@ export default function combineReducers(reducers) {
 
   let shapeAssertionError
   try {
+    // 检测reducers是否存在默认导出的state，不存在则抛出异常
     assertReducerShape(finalReducers)
   } catch (e) {
+    // 捕获，assertReducerShape方法中的意外异常。
     shapeAssertionError = e
   }
 
+  // dispatch 处调用
   return function combination(state = {}, action) {
+    // 如存在意外异常，则抛出。
     if (shapeAssertionError) {
       throw shapeAssertionError
     }
 
+    // 检验各个参数的有效性
     if (process.env.NODE_ENV !== 'production') {
       const warningMessage = getUnexpectedStateShapeWarningMessage(
         state,
@@ -169,13 +172,19 @@ export default function combineReducers(reducers) {
       const reducer = finalReducers[key]
       const previousStateForKey = state[key]
       const nextStateForKey = reducer(previousStateForKey, action)
+
+      // 如果`dispatch`，reducer返回无效的state则抛出异常
       if (typeof nextStateForKey === 'undefined') {
         const errorMessage = getUndefinedStateErrorMessage(key, action)
         throw new Error(errorMessage)
       }
+
+      // 将所有reducer的state合并到nextState中
       nextState[key] = nextStateForKey
+      // 初始state与调用reducer得到的state不一致，则说明state发生改变
       hasChanged = hasChanged || nextStateForKey !== previousStateForKey
     }
+    // 任意的reducer中的state发生改变，都始终返回最新的state，否则返回初始的state
     return hasChanged ? nextState : state
   }
 }

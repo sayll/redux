@@ -1,5 +1,24 @@
 # <a href='http://redux.js.org'><img src='https://camo.githubusercontent.com/f28b5bc7822f1b7bb28a96d8d09e7d79169248fc/687474703a2f2f692e696d6775722e636f6d2f4a65567164514d2e706e67' height='60' alt='Redux Logo' aria-label='Redux.js.org' /></a>
 
+## Redux源码分析
+
+Redux 有五个 API，分别是：
+
+- [createStore(reducer, [initialState])](./src/createStore.js)
+- [combineReducers(reducers)](./src/combineReducers.js)
+- [applyMiddleware(...middlewares)](./src/applyMiddleware.js)
+- [bindActionCreators(actionCreators, dispatch)](./src/bindActionCreators.js)
+- [compose(...functions)](./src/compose.js)
+
+createStore 生成的 store 有四个 API，分别是：
+- getState()
+- dispatch(action)
+- subscribe(listener)
+- replaceReducer(nextReducer)
+
+> 4个API详细请参考[createStore](./src/createStore.js)
+
+## 文档
 Redux is a predictable state container for JavaScript apps.  
 (Not to be confused with a WordPress framework – [Redux Framework](https://reduxframework.com/).)
 
